@@ -2,3 +2,4 @@
 *.info
 .venv/
 Resources/original_datasets/
+Output/
