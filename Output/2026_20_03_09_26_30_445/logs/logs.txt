@@ -1,0 +1,5 @@
+
+Simulator has been running for 0.01 seconds. 
+Currently going for iteration 0, latest accuracy value : 1.0, cumulated regrets: 0.0.
+
+
