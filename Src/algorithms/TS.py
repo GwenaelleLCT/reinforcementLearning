@@ -1,5 +1,5 @@
 '''
-Created on 20 fevrier 2026
+Created on 24 mars 2026
 '''
 
 #--------------------------------------------------------------------#
@@ -8,66 +8,36 @@ Created on 20 fevrier 2026
 #                                                                    #
 #--------------------------------------------------------------------#
 
-from math import sqrt, log
-import random
 import numpy as np
-#--------------------------------------------------------------------#
-#                                                                    #
-#                          Packages import                           #
-#                                                                    #
-#--------------------------------------------------------------------#
-
-
 
 
 #--------------------------------------------------------------------#
 #                                                                    #
-#                          Global Variables                          #
+#                        Functions & Objects                         #
 #                                                                    #
 #--------------------------------------------------------------------#
 
 
-#--------------------------------------------------------------------#
-#                                                                    #
-#                         Functions & Objects                        #
-#                                                                    #
-#--------------------------------------------------------------------#
+class TS():
 
-
-
-class LinUCB1():
-
-    def __init__(self, arms=None, dimension_context=None): 
+    def __init__(self, arms=None): 
         
         self.ground_arms = arms
         self.arms_pool = self.ground_arms.copy()
-        self.name = "LinUCB1"
+        self.name = "TS"
 
         self.arms_payoff_vectors = {"cumulated_rewards" : np.zeros(len(self.ground_arms)),
                                     "tries" : np.zeros(len(self.ground_arms))
                                     }
         
         self.arm_chosen = None
-        # threshold used to compute rewards, actual feedback is compared to it
-        # Follow the simulator metric, but this can be changed.
         self.threshold = 4
-
-        delta = 0.01
-        self.alpha = 1 + sqrt(log(2 / delta) / 2) # exploration parameter, can be tuned
-
-        self.dimension_context = dimension_context +1 # Adding 1 for the bias term
-
-        self.A = np.array([np.identity(self.dimension_context) for arm in range(len(self.ground_arms))]) # A is a list of matrices, one for each arm
-        self.b = np.array([np.zeros(self.dimension_context) for arm in range(len(self.ground_arms))]) # b is a list of vectors, one for each arm
-        
         
         # -------------------------------------------------------------------
 
     def run(self, observed_value, user_context=None):
-        self.current_context = np.append(user_context, 1.0) # Adding bias term
 
         self.init_choice(observed_value)
-
         self.arm_chosen = self.choose_action()
         
         return self.arm_chosen
@@ -80,28 +50,33 @@ class LinUCB1():
         # Ensuring algorithm only arms for which feedback have been provided by current user
         self.arms_pool = self.ground_arms[self.ground_arms["arm_id"].isin(observation["arm_id"])]
         self.arms_pool.reset_index(inplace=True)
-
         
         # -------------------------------------------------------------------
 
     def choose_action(self):
-        arm_pool_size = len(self.arms_pool['arm_id'])
-        expected_payoff = np.zeros(arm_pool_size) - 1
 
-        i=0
+        arm_pool_size = len(self.arms_pool['arm_id'])
+        sampled_values = np.zeros(arm_pool_size)
+        
+        i = 0
         for arm in self.arms_pool['arm_id']:
             arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == arm][0]
-
-            A_inv = np.linalg.inv(self.A[arm_pos])
-            theta = A_inv @ self.b[arm_pos]
-            x = self.current_context
-            expected_payoff[i] = theta @ x + self.alpha * sqrt(x @ A_inv @ x.T)
+            
+            # Calcul des Succès (S_i) et des Échecs (F_i)
+            S_i = self.arms_payoff_vectors["cumulated_rewards"][arm_pos]
+            F_i = self.arms_payoff_vectors["tries"][arm_pos] - S_i
+            
+            # Échantillonnage à partir de la distribution Beta (S_i + 1, F_i + 1)
+            # Le "+1" sert d'initialisation (Prior de Bayes) quand le bras n'a jamais été joué
+            sampled_values[i] = np.random.beta(S_i + 1, F_i + 1)
+            
             i += 1
-        arm_chosen_index = np.argmax(expected_payoff) 
+
+        # Choisir l'index du bras qui a obtenu la plus grande valeur lors du tirage
+        arm_chosen_index = np.argmax(sampled_values)
         arm_chosen = self.arms_pool["arm_id"][arm_chosen_index]
             
         return arm_chosen
-
 
         # -------------------------------------------------------------------
 
@@ -114,16 +89,15 @@ class LinUCB1():
 
         return reward
 
-
         # -------------------------------------------------------------------
 
     def update(self, observation):
 
         observed_reward = self.evaluate(observation)
+        
         arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == self.arm_chosen][0]
-        x = self.current_context
-        self.A[arm_pos] += np.outer(x, x)
-        self.b[arm_pos] += observed_reward * x
+        
+        # Mise à jour des statistiques de base
         self.arms_payoff_vectors["cumulated_rewards"][arm_pos] += observed_reward
         self.arms_payoff_vectors["tries"][arm_pos] += 1
                   

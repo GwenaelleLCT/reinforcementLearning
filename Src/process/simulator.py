@@ -32,7 +32,8 @@ from Src.algorithms.EGreedy import EGreedy
 from Src.algorithms.Random import Random
 from Src.algorithms.UCB1 import UCB1
 from Src.algorithms.LinUCB1 import LinUCB1
-from Src.algorithms.TS import TS
+from Src.algorithms.CTS import CTS
+from Src.algorithms.ContextualGreedy import ContextualGreedy
 
 
 
@@ -73,8 +74,8 @@ class Simulator():
         self.dataset_name = "02-Mushrooms"
         self.datas = self.data_extraction()
         # provided algorithms:  EGreedy, Random, UCB1, BudgetConstrained
-        self.algorithm = UCB1(self.datas["arms"]) 
-        # self.algorithm = LinUCB1(self.datas["arms"], self.datas["contexts"].shape[1]-1) # providing the number of dimensions of the context to the algorithm, -1 because of the context_id column
+        # self.algorithm = UCB1(self.datas["arms"]) 
+        self.algorithm = CTS(self.datas["arms"], self.datas["contexts"].shape[1]-1) # providing the number of dimensions of the context to the algorithm, -1 because of the context_id column
 
         
         self.horizon = 30000
