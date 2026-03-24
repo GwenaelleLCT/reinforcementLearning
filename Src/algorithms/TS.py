@@ -55,16 +55,16 @@ class TS():
 
     def choose_action(self):
 
-        arm_pool_size = len(self.arms_pool['arm_id'])
-        sampled_values = np.zeros(arm_pool_size)
+        arm_pool_size = len(self.arms_pool['arm_id']) # Taille de la pool d'actions disponibles
+        sampled_values = np.zeros(arm_pool_size) # Tableau pour stocker les valeurs échantillonnées pour chaque bras de la pool
         
         i = 0
         for arm in self.arms_pool['arm_id']:
-            arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == arm][0]
+            arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == arm][0] # Récupération de la position du bras dans les tableaux de récompenses et d'essais
             
             # Calcul des Succès (S_i) et des Échecs (F_i)
-            S_i = self.arms_payoff_vectors["cumulated_rewards"][arm_pos]
-            F_i = self.arms_payoff_vectors["tries"][arm_pos] - S_i
+            S_i = self.arms_payoff_vectors["cumulated_rewards"][arm_pos] # Nombre de succès pour le bras i
+            F_i = self.arms_payoff_vectors["tries"][arm_pos] - S_i # Nombre d'échecs pour le bras i
             
             # Échantillonnage à partir de la distribution Beta (S_i + 1, F_i + 1)
             # Le "+1" sert d'initialisation (Prior de Bayes) quand le bras n'a jamais été joué
