@@ -52,22 +52,20 @@ class LinUCB1():
         # Follow the simulator metric, but this can be changed.
         self.threshold = 4
 
-        delta = 0.01
-        self.alpha = 1 + sqrt(log(2 / delta) / 2) # exploration parameter, can be tuned
+        self.dimension_context = dimension_context
 
-        self.dimension_context = dimension_context +1 # Adding 1 for the bias term
+        self.alpha = 1 # exploration parameter, can be tuned for better performance
 
-        self.A = np.array([np.identity(self.dimension_context) for arm in range(len(self.ground_arms))]) # A is a list of matrices, one for each arm
-        self.b = np.array([np.zeros(self.dimension_context) for arm in range(len(self.ground_arms))]) # b is a list of vectors, one for each arm
+        self.A = np.array([np.identity(self.dimension_context) for i in range(len(self.ground_arms))]) # A is a list of matrices, one for each arm
+        self.b = np.array([np.zeros(self.dimension_context) for i in range(len(self.ground_arms))]) # b is a list of vectors, one for each arm
         
         
         # -------------------------------------------------------------------
 
     def run(self, observed_value, user_context=None):
-        self.current_context = np.append(user_context, 1.0) # Adding bias term
+        self.current_context = user_context
 
         self.init_choice(observed_value)
-
         self.arm_chosen = self.choose_action()
         
         return self.arm_chosen
@@ -87,17 +85,19 @@ class LinUCB1():
     def choose_action(self):
         arm_pool_size = len(self.arms_pool['arm_id'])
         expected_payoff = np.zeros(arm_pool_size) - 1
-
+        x=self.current_context
         i=0
         for arm in self.arms_pool['arm_id']:
             arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == arm][0]
-
             A_inv = np.linalg.inv(self.A[arm_pos])
-            theta = A_inv @ self.b[arm_pos]
-            x = self.current_context
-            expected_payoff[i] = theta @ x + self.alpha * sqrt(x @ A_inv @ x.T)
-            i += 1
+            theta = np.dot(A_inv, self.b[arm_pos])
+
+            expected_payoff[i] = np.dot(theta, x) + self.alpha * sqrt(np.dot(x, np.dot(A_inv, x)))
+
+
+            i += 1 
         arm_chosen_index = np.argmax(expected_payoff) 
+        
         arm_chosen = self.arms_pool["arm_id"][arm_chosen_index]
             
         return arm_chosen
@@ -121,11 +121,11 @@ class LinUCB1():
 
         observed_reward = self.evaluate(observation)
         arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == self.arm_chosen][0]
-        x = self.current_context
+        x=self.current_context
         self.A[arm_pos] += np.outer(x, x)
         self.b[arm_pos] += observed_reward * x
-        self.arms_payoff_vectors["cumulated_rewards"][arm_pos] += observed_reward
-        self.arms_payoff_vectors["tries"][arm_pos] += 1
+        self.arms_payoff_vectors["cumulated_rewards"][self.arm_chosen] += observed_reward
+        self.arms_payoff_vectors["tries"][self.arm_chosen] += 1
                   
         
         # -------------------------------------------------------------------
