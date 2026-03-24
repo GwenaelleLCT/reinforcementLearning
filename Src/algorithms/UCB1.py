@@ -110,7 +110,6 @@ class UCB1():
             arm_chosen_index = np.argmax(expected_payoff) 
         
         arm_chosen = self.arms_pool["arm_id"][arm_chosen_index]
-        #sqrt(2*log(self.arms_payoff_vectors["tries"])/self.arms_payoff_vectors["tries"][arm_pos])
             
         return arm_chosen
 
