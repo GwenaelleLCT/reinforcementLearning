@@ -47,18 +47,14 @@ class EGreedy():
         self.name = "EGreedy"
         self.epsilon = 0.05
 
+        # Vecteurs de récompenses cumulées et de nombre d'essais pour chaque bras
         self.arms_payoff_vectors = {"cumulated_rewards" : np.zeros(len(self.ground_arms)),
                                     "tries" : np.zeros(len(self.ground_arms))
                                     }
         
         self.arm_chosen = None
-        # threshold used to compute rewards, actual feedback is compared to it
-        # Follow the simulator metric, but this can be changed.
         self.threshold = 4
         
-        
-        # -------------------------------------------------------------------
-
     def run(self, observed_value, user_context=None):
 
         self.init_choice(observed_value)
@@ -95,25 +91,26 @@ class EGreedy():
         if arm_chosen_index == -1 : 
 
             # Random exploration
-            n = random.uniform(0., 1.) 
-            if n < self.epsilon:
-                    arm_chosen_index = random.choice(self.arms_pool.index)
+            n = random.uniform(0., 1.) # Tirage d'un nombre aléatoire entre 0 et 1
+            if n < self.epsilon: # Si le nombre tiré est inférieur à epsilon, on choisit un bras aléatoirement
+                    arm_chosen_index = random.choice(self.arms_pool.index) # Choix aléatoire parmi les bras disponibles dans la pool
 
 
             # Exploitation                
             else :
-                arm_pool_size = len(self.arms_pool['arm_id'])
-                expected_payoff = np.zeros(arm_pool_size) - 1
-                i=0
-                for arm in self.arms_pool['arm_id']:
-                    arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == arm]
-                    expected_payoff[i] = self.arms_payoff_vectors["cumulated_rewards"][arm_pos] / \
-                                            self.arms_payoff_vectors["tries"][arm_pos]
+                arm_pool_size = len(self.arms_pool['arm_id']) # Taille de la pool d'actions disponibles
+                expected_payoff = np.zeros(arm_pool_size) - 1 # Initialisation du tableau des payoffs attendus pour chaque bras de la pool
+                i=0 # Index pour parcourir la pool d'actions
+                for arm in self.arms_pool['arm_id']: # Parcours de chaque bras de la pool d'actions
+                    arm_pos = self.ground_arms.index[self.ground_arms["arm_id"] == arm][0] # Récupération de la position du bras dans les tableaux de récompenses et d'essais
+                    # Calcul du payoff attendu pour le bras actuel : récompense cumulée divisée par le nombre d'essais
+                    expected_payoff[i] = self.arms_payoff_vectors["cumulated_rewards"][arm_pos] / self.arms_payoff_vectors["tries"][arm_pos]
  
-                    i += 1 
-                arm_chosen_index = np.argmax(expected_payoff)
+                    i += 1 # Incrémentation de l'index pour le prochain bras de la pool
+                arm_chosen_index = np.argmax(expected_payoff) # Choix de l'index du bras qui a le payoff attendu le plus élevé
+                # arm_chosen_index correspond à l'index dans la pool d'actions, pas dans les tableaux de récompenses et d'essais
         
-        arm_chosen = self.arms_pool["arm_id"][arm_chosen_index]
+        arm_chosen = self.arms_pool["arm_id"][arm_chosen_index] # Récupération de l'identifiant du bras choisi à partir de la pool d'actions en utilisant l'index sélectionné
             
         return arm_chosen
 
