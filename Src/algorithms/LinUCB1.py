@@ -54,7 +54,7 @@ class LinUCB1():
 
         self.dimension_context = dimension_context
 
-        self.alpha = 1 # exploration parameter, can be tuned for better performance
+        self.alpha = 1 
 
         self.A = np.array([np.identity(self.dimension_context) for i in range(len(self.ground_arms))]) # A is a list of matrices, one for each arm
         self.b = np.array([np.zeros(self.dimension_context) for i in range(len(self.ground_arms))]) # b is a list of vectors, one for each arm
