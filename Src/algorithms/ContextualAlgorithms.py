@@ -3,9 +3,9 @@ Framework général pour les algorithmes contextuels
 '''
 import numpy as np
 
-class ContextualAlgorithm():
+class ContextualAlgorithms():
 
-    def __init__(self, arms=None, dimension_context=None, name="ContextualAlgorithm"): 
+    def __init__(self, arms=None, dimension_context=None, name="ContextualAlgorithms"): 
         
         self.ground_arms = arms
         self.arms_pool = self.ground_arms.copy()

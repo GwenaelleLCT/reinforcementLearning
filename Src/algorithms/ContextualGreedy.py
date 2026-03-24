@@ -48,7 +48,7 @@ class ContextualGreedy():
     def run(self, observed_value, user_context=None):
         
         # Stockage du contexte actuel pour le choix d'action et la mise à jour
-        self.current_context = np.append(user_context)
+        self.current_context = user_context
 
         self.init_choice(observed_value)
         self.arm_chosen = self.choose_action()
